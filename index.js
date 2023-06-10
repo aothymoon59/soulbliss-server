@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cors = require("cors");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
@@ -30,12 +30,17 @@ async function run() {
     // await client.connect();
     const usersCollection = client.db("soulBlissDB").collection("users");
 
-    // user related apis
+    /*---------------------------
+          User Related APIs
+     ----------------------------*/
+
+    // get all users
     app.get("/users", async (req, res) => {
       const result = await usersCollection.find().toArray();
       res.send(result);
     });
 
+    // post users to databse
     app.post("/users", async (req, res) => {
       const user = req.body;
       const query = { email: user.email };
@@ -44,6 +49,18 @@ async function run() {
         return res.send({ message: "user already exist" });
       }
       const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
+
+    app.patch("/users/admin/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          role: "admin",
+        },
+      };
+      const result = await usersCollection.updateOne(filter, updatedDoc);
       res.send(result);
     });
     // Send a ping to confirm a successful connection
