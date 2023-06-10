@@ -51,6 +51,7 @@ async function run() {
   try {
     // await client.connect();
     const usersCollection = client.db("soulBlissDB").collection("users");
+    const classCollection = client.db("soulBlissDB").collection("classes");
 
     // generate jwt token
     app.post("/jwt", (req, res) => {
@@ -74,34 +75,28 @@ async function run() {
       next();
     };
 
-    // warning : use verifyJWT before using verifyInstructor
-    const verifyInstructor = async (req, res, next) => {
-      const email = req.decoded.email;
-      const query = { email: email };
-      const user = await usersCollection.findOne(query);
-      if (user?.role !== "instructor") {
-        return res
-          .status(403)
-          .send({ error: true, message: "forbidden message" });
-      }
-      next();
-    };
+    // // warning : use verifyJWT before using verifyInstructor
+    // const verifyInstructor = async (req, res, next) => {
+    //   const email = req.decoded.email;
+    //   const query = { email: email };
+    //   const user = await usersCollection.findOne(query);
+    //   if (user?.role !== "instructor") {
+    //     return res
+    //       .status(403)
+    //       .send({ error: true, message: "forbidden message" });
+    //   }
+    //   next();
+    // };
 
     /*---------------------------
           User Related APIs
      ----------------------------*/
 
     // get all users
-    app.get(
-      "/users",
-      verifyJWT,
-      verifyAdmin,
-      verifyInstructor,
-      async (req, res) => {
-        const result = await usersCollection.find().toArray();
-        res.send(result);
-      }
-    );
+    app.get("/users", verifyJWT, verifyAdmin, async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    });
 
     // post users to databse
     app.post("/users", async (req, res) => {
@@ -174,6 +169,18 @@ async function run() {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const result = await usersCollection.deleteOne(filter);
+      res.send(result);
+    });
+
+    /*---------------------------
+          class Related APIs
+     ----------------------------*/
+
+    // create class
+    //TODO: verifyJWT and verify Instructor
+    app.post("/classes", async (req, res) => {
+      const newItem = req.body;
+      const result = await classCollection.insertOne(newItem);
       res.send(result);
     });
 
