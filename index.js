@@ -52,6 +52,7 @@ async function run() {
       res.send(result);
     });
 
+    // make user to admin API
     app.patch("/users/admin/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
@@ -63,6 +64,28 @@ async function run() {
       const result = await usersCollection.updateOne(filter, updatedDoc);
       res.send(result);
     });
+
+    // make user to instructor API
+    app.patch("/users/instructor/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          role: "instructor",
+        },
+      };
+      const result = await usersCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
+
+    // delete a user
+    app.delete("/users/delete/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const result = await usersCollection.deleteOne(filter);
+      res.send(result);
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
