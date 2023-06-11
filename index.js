@@ -52,6 +52,7 @@ async function run() {
     // await client.connect();
     const usersCollection = client.db("soulBlissDB").collection("users");
     const classCollection = client.db("soulBlissDB").collection("classes");
+    const selectedCollection = client.db("soulBlissDB").collection("selected");
 
     // generate jwt token
     app.post("/jwt", (req, res) => {
@@ -113,18 +114,17 @@ async function run() {
     // check user admin or not
     app.get("/users/admin/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
-
       if (req.decoded.email !== email) {
         return res.send({ admin: false });
       }
-
       const query = { email: email };
       const user = await usersCollection.findOne(query);
       const result = { admin: user?.role === "admin" };
       res.send(result);
     });
 
-    app.get("/users/instructors/all", verifyJWT, async (req, res) => {
+    // get all instructor
+    app.get("/users/instructors/all", async (req, res) => {
       const query = { role: "instructor" };
       const result = await usersCollection.find(query).toArray();
       res.send(result);
@@ -209,7 +209,37 @@ async function run() {
       res.send(result);
     });
 
-    // approved class
+    // get all approved class
+    app.get("/classes/approved/all", async (req, res) => {
+      const query = { status: "approved" };
+      const result = await classCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    // set selected class
+    // app.post("/selected", async (req, res) => {
+    //   const selectedClass = req.body;
+    //   const result = await selectedCollection.insertOne(selectedClass);
+    //   res.send(result);
+    // });
+
+    app.post("/selected", async (req, res) => {
+      const selectedClass = req.body;
+
+      // Check if the class is already selected by the user
+      const existingSelection = await selectedCollection.findOne(selectedClass);
+
+      if (existingSelection) {
+        // If the class is already selected, send an error response
+        res.status(400).json({ error: "Class already selected by the user" });
+      } else {
+        // If the class is not yet selected, insert it into the collection
+        const result = await selectedCollection.insertOne(selectedClass);
+        res.send(result);
+      }
+    });
+
+    //set approved class
     app.patch("/classes/approved/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
@@ -222,7 +252,7 @@ async function run() {
       res.send(result);
     });
 
-    // denied class
+    //set denied class
     app.patch("/classes/denied/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
