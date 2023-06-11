@@ -176,14 +176,32 @@ async function run() {
           class Related APIs
      ----------------------------*/
 
-    // create class
-    //TODO: verifyJWT and verify Instructor
     app.post("/classes", async (req, res) => {
       const newItem = req.body;
       const result = await classCollection.insertOne(newItem);
       res.send(result);
     });
 
+    app.get("/classes", async (req, res) => {
+      const result = await classCollection.find().toArray();
+      res.send(result);
+    });
+
+    // get specific instructor class
+    app.get("/classes/:email", verifyJWT, async (req, res) => {
+      const decodedEmail = req.decoded.email;
+      const email = req.params.email;
+
+      if (email !== decodedEmail) {
+        return res
+          .status(403)
+          .send({ error: true, message: "Forbidden Access" });
+      }
+      const query = { email: email };
+      const result = await classCollection.find(query).toArray();
+
+      res.send(result);
+    });
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
