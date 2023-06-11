@@ -124,6 +124,12 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/users/instructors/all", verifyJWT, async (req, res) => {
+      const query = { role: "instructor" };
+      const result = await usersCollection.find(query).toArray();
+      res.send(result);
+    });
+
     // check user instructor or not
     app.get("/users/instructor/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
@@ -204,7 +210,7 @@ async function run() {
     });
 
     // approved class
-    app.patch("/classes/approve/:id", async (req, res) => {
+    app.patch("/classes/approved/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const updatedDoc = {
@@ -217,7 +223,7 @@ async function run() {
     });
 
     // denied class
-    app.patch("/classes/deny/:id", async (req, res) => {
+    app.patch("/classes/denied/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
       const updatedDoc = {
@@ -228,6 +234,10 @@ async function run() {
       const result = await classCollection.updateOne(filter, updatedDoc);
       res.send(result);
     });
+
+    /*---------------------------
+          Instructor Related APIs
+     ----------------------------*/
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
