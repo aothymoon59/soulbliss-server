@@ -239,6 +239,22 @@ async function run() {
       }
     });
 
+    // get specific user selected class
+    app.get("/selected/:email", verifyJWT, async (req, res) => {
+      const decodedEmail = req.decoded.email;
+      const email = req.params.email;
+
+      if (email !== decodedEmail) {
+        return res
+          .status(403)
+          .send({ error: true, message: "Forbidden Access" });
+      }
+      const query = { buyer_email: email };
+      const result = await selectedCollection.find(query).toArray();
+
+      res.send(result);
+    });
+
     //set approved class
     app.patch("/classes/approved/:id", async (req, res) => {
       const id = req.params.id;
