@@ -218,6 +218,18 @@ async function run() {
       res.send(result);
     });
 
+    // TODO: implement will frontend home
+    // get most popular class
+    app.get("/popularClasses", async (req, res) => {
+      const query = { status: "approved" };
+      const result = await classCollection
+        .find(query)
+        .sort({ enrolled: -1 })
+        .limit(6)
+        .toArray();
+      res.send(result);
+    });
+
     // set selected class
     // app.post("/selected", async (req, res) => {
     //   const selectedClass = req.body;
