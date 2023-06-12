@@ -132,6 +132,18 @@ async function run() {
       res.send(result);
     });
 
+    // TODO:implement will frontend home
+    // get most popular instructors
+    app.get("/popularInstructors", async (req, res) => {
+      const query = { role: "instructor" };
+      const options = { sort: { students: -1 } };
+      const result = await usersCollection
+        .find(query, options)
+        .limit(6)
+        .toArray();
+      res.send(result);
+    });
+
     // check user instructor or not
     app.get("/users/instructor/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
