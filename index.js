@@ -281,57 +281,68 @@ async function run() {
       }
     });
 
-    // // Save a enrolled in database
-    // app.post("/payments", verifyJWT, async (req, res) => {
-    //   const payment = req.body;
-    //   const query = {
-    //     selectedId: payment?.selectedId,
-    //     buyer_email: payment?.buyer_email,
-    //   };
-    //   const exist = await paymentsCollection.findOne(query);
-    //   if (exist) {
-    //     return res.send({ exist: true });
-    //   }
+    //------------------------------------------------
+    // After successfully payment enrolled count , seat count, delete selected and payment
 
-    //   const addPayment = await paymentsCollection.insertOne(payment);
-
-    //   res.send(addPayment);
-    // });
-
-    // Save a payment in the database and remove the selected class
     app.post("/payments", verifyJWT, async (req, res) => {
       const payment = req.body;
-      const query = {
+      const insertResult = await paymentsCollection.insertOne(payment);
+
+      const deleteQuery = {
         selectedId: payment?.selectedId,
         buyer_email: payment?.buyer_email,
       };
 
-      try {
-        const exist = await paymentsCollection.findOne(query);
-        if (exist) {
-          return res.send({ exist: true });
-        }
+      // Remove the selected class
+      const deleteResult = await selectedCollection.findOneAndDelete(
+        deleteQuery
+      );
 
-        // Remove the selected class
-        const deleteResult = await selectedCollection.findOneAndDelete(query);
+      const updateQuery = {
+        _id: new ObjectId(payment.selectedId),
+      };
+      const updateResult = await classCollection.updateOne(updateQuery, {
+        $inc: { enrolled: 1 },
+      });
 
-        if (deleteResult.value) {
-          // Selected class successfully removed
-          const addPayment = await paymentsCollection.insertOne(payment);
-          res.send(addPayment);
-        } else {
-          // Selected class not found or not removed
-          res.status(404).send({ error: "Selected class not found" });
+      const updateSeatsQuery = {
+        _id: new ObjectId(payment.selectedId),
+      };
+      const updateSeatsResult = await classCollection.updateOne(
+        updateSeatsQuery,
+        {
+          $inc: { seats: -1 },
         }
-      } catch (error) {
-        res
-          .status(500)
-          .send({ error: "An error occurred while processing the payment" });
-      }
+      );
+
+      const selectedId = payment.selectedId;
+      const query = { _id: new ObjectId(selectedId) };
+
+      const classData = await classCollection.findOne(query);
+      const instructorEmail = classData.email;
+
+      const updateInstructorQuery = { email: instructorEmail };
+
+      // if instructor has no students field, create one
+      const updateInstructorResult = await usersCollection.updateOne(
+        updateInstructorQuery,
+        {
+          $inc: { students: 1 },
+        }
+      );
+
+      res.send({
+        insertResult,
+        deleteResult,
+        updateResult,
+        updateSeatsResult,
+        updateInstructorResult,
+      });
     });
 
-    // TODO:
-    // get specific user selected class
+    //----------------------------------------------------
+
+    // get specific user enrolled class
     app.get("/enrolled/:email", verifyJWT, async (req, res) => {
       const decodedEmail = req.decoded.email;
       const email = req.params.email;
