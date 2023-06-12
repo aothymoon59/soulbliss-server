@@ -330,6 +330,23 @@ async function run() {
       }
     });
 
+    // TODO:
+    // get specific user selected class
+    app.get("/enrolled/:email", verifyJWT, async (req, res) => {
+      const decodedEmail = req.decoded.email;
+      const email = req.params.email;
+
+      if (email !== decodedEmail) {
+        return res
+          .status(403)
+          .send({ error: true, message: "Forbidden Access" });
+      }
+      const query = { buyer_email: email };
+      const result = await paymentsCollection.find(query).toArray();
+
+      res.send(result);
+    });
+
     //read single class data
     app.get("/selected/single/:id", async (req, res) => {
       const id = req.params.id;
