@@ -223,6 +223,7 @@ async function run() {
     //   res.send(result);
     // });
 
+    // save a selected class in db
     app.post("/selected", async (req, res) => {
       const selectedClass = req.body;
 
@@ -253,6 +254,14 @@ async function run() {
       const query = { buyer_email: email };
       const result = await selectedCollection.find(query).toArray();
 
+      res.send(result);
+    });
+
+    //read single class data
+    app.get("/selected/single/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await selectedCollection.findOne(query);
       res.send(result);
     });
 
@@ -291,12 +300,11 @@ async function run() {
     });
 
     //set feedback class
-    app.put("/classes/feedback/:id", async (req, res) => {
+    app.patch("/classes/feedback/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
 
       const updatedFeedback = req.body;
-      console.log(req.body);
       const updatedDoc = {
         $set: {
           feedback: updatedFeedback.feedback,
