@@ -5,6 +5,7 @@ const cors = require("cors");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
+const stripe = require("stripe")(process.env.PAYMENT_SECRET_KEY);
 
 // middleware
 const corsOptions = {
@@ -53,6 +54,7 @@ async function run() {
     const usersCollection = client.db("soulBlissDB").collection("users");
     const classCollection = client.db("soulBlissDB").collection("classes");
     const selectedCollection = client.db("soulBlissDB").collection("selected");
+    const paymentsCollection = client.db("soulBlissDB").collection("enrolled");
 
     // generate jwt token
     app.post("/jwt", (req, res) => {
@@ -263,6 +265,69 @@ async function run() {
       const result = await selectedCollection.find(query).toArray();
 
       res.send(result);
+    });
+
+    // generate client secret
+    app.post("/create-payment-intent", verifyJWT, async (req, res) => {
+      const { price } = req.body;
+      if (price) {
+        const amount = parseFloat(price) * 100;
+        const paymentIntent = await stripe.paymentIntents.create({
+          amount: amount,
+          currency: "usd",
+          payment_method_types: ["card"],
+        });
+        res.send({ clientSecret: paymentIntent.client_secret });
+      }
+    });
+
+    // // Save a enrolled in database
+    // app.post("/payments", verifyJWT, async (req, res) => {
+    //   const payment = req.body;
+    //   const query = {
+    //     selectedId: payment?.selectedId,
+    //     buyer_email: payment?.buyer_email,
+    //   };
+    //   const exist = await paymentsCollection.findOne(query);
+    //   if (exist) {
+    //     return res.send({ exist: true });
+    //   }
+
+    //   const addPayment = await paymentsCollection.insertOne(payment);
+
+    //   res.send(addPayment);
+    // });
+
+    // Save a payment in the database and remove the selected class
+    app.post("/payments", verifyJWT, async (req, res) => {
+      const payment = req.body;
+      const query = {
+        selectedId: payment?.selectedId,
+        buyer_email: payment?.buyer_email,
+      };
+
+      try {
+        const exist = await paymentsCollection.findOne(query);
+        if (exist) {
+          return res.send({ exist: true });
+        }
+
+        // Remove the selected class
+        const deleteResult = await selectedCollection.findOneAndDelete(query);
+
+        if (deleteResult.value) {
+          // Selected class successfully removed
+          const addPayment = await paymentsCollection.insertOne(payment);
+          res.send(addPayment);
+        } else {
+          // Selected class not found or not removed
+          res.status(404).send({ error: "Selected class not found" });
+        }
+      } catch (error) {
+        res
+          .status(500)
+          .send({ error: "An error occurred while processing the payment" });
+      }
     });
 
     //read single class data
