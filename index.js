@@ -99,7 +99,7 @@ async function run() {
       res.send(result);
     });
 
-    // post users to databse
+    // post users to database
     app.post("/users", async (req, res) => {
       const user = req.body;
       const query = { email: user.email };
@@ -231,7 +231,8 @@ async function run() {
 
       if (existingSelection) {
         // If the class is already selected, send an error response
-        res.status(400).json({ error: "Class already selected by the user" });
+        // res.status(400).json({ error: "Class already selected by the user" });
+        return res.status(400).send({ exist: true });
       } else {
         // If the class is not yet selected, insert it into the collection
         const result = await selectedCollection.insertOne(selectedClass);
@@ -275,6 +276,30 @@ async function run() {
       const updatedDoc = {
         $set: {
           status: "denied",
+        },
+      };
+      const result = await classCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
+
+    //read single class data
+    app.get("/classes/single/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await classCollection.findOne(query);
+      res.send(result);
+    });
+
+    //set feedback class
+    app.put("/classes/feedback/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+
+      const updatedFeedback = req.body;
+      console.log(req.body);
+      const updatedDoc = {
+        $set: {
+          feedback: updatedFeedback.feedback,
         },
       };
       const result = await classCollection.updateOne(filter, updatedDoc);
