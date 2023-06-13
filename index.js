@@ -241,13 +241,6 @@ async function run() {
       res.send(result);
     });
 
-    // set selected class
-    // app.post("/selected", async (req, res) => {
-    //   const selectedClass = req.body;
-    //   const result = await selectedCollection.insertOne(selectedClass);
-    //   res.send(result);
-    // });
-
     // save a selected class in db
     app.post("/selected", async (req, res) => {
       const selectedClass = req.body;
