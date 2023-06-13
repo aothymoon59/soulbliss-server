@@ -201,6 +201,23 @@ async function run() {
       res.send(result);
     });
 
+    app.put("/classes/update/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updatedClass = req.body;
+      const myClass = {
+        $set: {
+          name: updatedClass?.name,
+          seats: updatedClass?.seats,
+          price: updatedClass?.price,
+          status: updatedClass?.status,
+          feedback: updatedClass?.feedback,
+        },
+      };
+      const result = await classCollection.updateOne(filter, myClass);
+      res.send(result);
+    });
+
     app.get("/classes", async (req, res) => {
       const result = await classCollection.find().toArray();
       res.send(result);
@@ -229,7 +246,6 @@ async function run() {
       res.send(result);
     });
 
-    // TODO: implement will frontend home
     // get most popular class
     app.get("/popularClasses", async (req, res) => {
       const query = { status: "approved" };
