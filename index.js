@@ -132,7 +132,6 @@ async function run() {
       res.send(result);
     });
 
-    // TODO:implement will frontend home
     // get most popular instructors
     app.get("/popularInstructors", async (req, res) => {
       const query = { role: "instructor" };
