@@ -55,6 +55,9 @@ async function run() {
     const classCollection = client.db("soulBlissDB").collection("classes");
     const selectedCollection = client.db("soulBlissDB").collection("selected");
     const paymentsCollection = client.db("soulBlissDB").collection("enrolled");
+    const reviewsCollection = client
+      .db("soulBlissDB")
+      .collection("testimonials");
 
     // generate jwt token
     app.post("/jwt", (req, res) => {
@@ -340,6 +343,7 @@ async function run() {
       const updateSeatsQuery = {
         _id: new ObjectId(payment.selectedId),
       };
+
       const updateSeatsResult = await classCollection.updateOne(
         updateSeatsQuery,
         {
@@ -464,6 +468,12 @@ async function run() {
         },
       };
       const result = await classCollection.updateOne(filter, updatedDoc);
+      res.send(result);
+    });
+
+    // get all clients reviews
+    app.get("/reviews", async (req, res) => {
+      const result = await reviewsCollection.find().toArray();
       res.send(result);
     });
 
